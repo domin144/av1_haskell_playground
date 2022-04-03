@@ -1,15 +1,23 @@
-module CmdArgs (parseArgs) where
+module CmdArgs (parseArgs, printTransportFormatArg, parseTransportFormatArg) where
 
 import Common
 
+class TextArg a where
+  printArg :: a -> String
+  parseArg :: String -> a
+
+instance TextArg TransportFormat where
+  printArg LowOverhead = "low_overhead"
+  printArg AnnexB = "annex_b"
+  parseArg "low_overhead" = LowOverhead
+  parseArg "annex_b" = AnnexB
+  parseArg _ = error "invalid transport format"
+
 printTransportFormatArg :: TransportFormat -> String
-printTransportFormatArg LowOverhead = "low_overhead"
-printTransportFormatArg AnnexB = "annex_b"
+printTransportFormatArg = printArg
 
 parseTransportFormatArg :: String -> TransportFormat
-parseTransportFormatArg "low_overhead" = LowOverhead
-parseTransportFormatArg "annex_b" = AnnexB
-parseTransportFormatArg _ = error "invalid transport format"
+parseTransportFormatArg = parseArg
 
 parseArgs :: [String] -> Parameters
 parseArgs [input, output] =
