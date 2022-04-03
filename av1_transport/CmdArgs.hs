@@ -1,22 +1,27 @@
-module CmdArgs (parseArgs, printTransportFormatArg, parseTransportFormatArg) where
+module CmdArgs
+  ( parseArgs,
+    printTransportFormatArg,
+    parseTransportFormatArg,
+    TextArg (..),
+  )
+where
 
 import Common
+import Data.List(find)
 
-class TextArg a where
+class (Eq a, Enum a, Bounded a) => TextArg a where
   printArg :: a -> String
-  parseArg :: String -> a
+  parseArg :: String -> Maybe a
+  parseArg string = find (\x -> printArg x == string) [minBound ..]
 
 instance TextArg TransportFormat where
   printArg LowOverhead = "low_overhead"
   printArg AnnexB = "annex_b"
-  parseArg "low_overhead" = LowOverhead
-  parseArg "annex_b" = AnnexB
-  parseArg _ = error "invalid transport format"
 
 printTransportFormatArg :: TransportFormat -> String
 printTransportFormatArg = printArg
 
-parseTransportFormatArg :: String -> TransportFormat
+parseTransportFormatArg :: String -> Maybe TransportFormat
 parseTransportFormatArg = parseArg
 
 parseArgs :: [String] -> Parameters

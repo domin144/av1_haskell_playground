@@ -9,11 +9,19 @@ testPrintTransportFormatArg =
       printTransportFormatArg AnnexB == "annex_b"
     ]
 
-testParseArgs0 :: Bool
-testParseArgs0 =
+testParseTransportFormatArg :: Bool
+testParseTransportFormatArg =
+  and
+    [ parseTransportFormatArg "low_overhead" == Just LowOverhead,
+      parseTransportFormatArg "annex_b" == Just AnnexB
+    ]
+
+testParseArgs :: Bool
+testParseArgs =
   parseArgs ["input.txt", "output.txt"]
     == Parameters {inputFileName = "input.txt", outputFileName = "output.txt"}
 
 main = do
-  putStrLn $ "testParseArgs0 : " ++ show testParseArgs0
-  putStrLn $ "testPrintTransportFormatArg : " ++ show testParseArgs0
+  putStrLn $ "testPrintTransportFormatArg : " ++ show testPrintTransportFormatArg
+  putStrLn $ "testParseTransportFormatArg : " ++ show testParseTransportFormatArg
+  putStrLn $ "testParseArgs : " ++ show testParseArgs
