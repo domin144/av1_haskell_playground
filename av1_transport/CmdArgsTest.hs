@@ -5,21 +5,35 @@ import Data.List (all)
 testPrintTransportFormatArg :: Bool
 testPrintTransportFormatArg =
   and
-    [ printTransportFormatArg LowOverhead == "low_overhead",
-      printTransportFormatArg AnnexB == "annex_b"
+    [ printArg LowOverhead == "low_overhead",
+      printArg AnnexB == "annex_b"
     ]
 
 testParseTransportFormatArg :: Bool
 testParseTransportFormatArg =
   and
-    [ parseTransportFormatArg "low_overhead" == Just LowOverhead,
-      parseTransportFormatArg "annex_b" == Just AnnexB
+    [ parseArg "low_overhead" == Just LowOverhead,
+      parseArg "annex_b" == Just AnnexB
     ]
 
 testParseArgs :: Bool
 testParseArgs =
-  parseArgs ["input.txt", "output.txt"]
-    == Parameters {inputFileName = "input.txt", outputFileName = "output.txt"}
+  parseArgs
+    [ "-o",
+      "output.txt",
+      "-i",
+      "input.txt",
+      "-of",
+      "annex_b",
+      "-if",
+      "low_overhead"
+    ]
+    == Parameters
+      { inputFormat = LowOverhead,
+        outputFormat = AnnexB,
+        inputFileName = "input.txt",
+        outputFileName = "output.txt"
+      }
 
 main = do
   putStrLn $ "testPrintTransportFormatArg : " ++ show testPrintTransportFormatArg

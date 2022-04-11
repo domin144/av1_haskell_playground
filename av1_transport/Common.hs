@@ -4,9 +4,9 @@ data TransportFormat = LowOverhead | AnnexB
   deriving (Eq, Ord, Show, Read, Bounded, Enum)
 
 data Parameters = Parameters
-  { -- inputFormat :: TransportFormat,
+  { inputFormat :: TransportFormat,
     inputFileName :: String,
-    -- outoputFormat :: TransportFormat,
+    outputFormat :: TransportFormat,
     outputFileName :: String
   }
   deriving (Eq, Show, Read)
