@@ -1,8 +1,17 @@
-import System.Environment as Env
-import System.IO
+import qualified AnnexB
+import CmdArgs (parseArgs)
+import Common (Parameters (..), TransportFormat (..))
+import qualified Data.ByteString.Lazy as B
+import Data.List (concat)
+import Data.Word (Word8)
+import System.Environment (getArgs)
+import System.IO (IOMode (ReadMode, WriteMode), hClose, openFile)
 
-import Common
-import CmdArgs(parseArgs)
+transform :: TransportFormat -> TransportFormat -> [Word8] -> [Word8]
+transform AnnexB AnnexB input = concat obus
+  where
+    Just obus = AnnexB.decodeBitstream input
+transform _ _ _ = error "not implemented yet"
 
 process :: Parameters -> IO ()
 process parsedArgs = do
@@ -10,12 +19,13 @@ process parsedArgs = do
   putStrLn $ "output: " ++ outputFileName parsedArgs
   inputHandle <- openFile (inputFileName parsedArgs) ReadMode
   outputHandle <- openFile (outputFileName parsedArgs) WriteMode
-  contents <- hGetContents inputHandle
-  hPutStr outputHandle contents
+  input <- B.hGetContents inputHandle
+  let output = transform (inputFormat parsedArgs) (outputFormat parsedArgs) (B.unpack input)
+  B.hPutStr outputHandle (B.pack output)
   hClose inputHandle
   hClose outputHandle
 
 main = do
-  args <- Env.getArgs
+  args <- getArgs
   let parsedArgs = parseArgs args
   process parsedArgs

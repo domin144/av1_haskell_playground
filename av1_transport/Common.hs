@@ -1,9 +1,16 @@
-module Common (TransportFormat (..), Parameters (..), decodeLeb128) where
+module Common
+  ( TransportFormat (..),
+    Parameters (..),
+    ObuBytes,
+    ObuType,
+    decodeLeb128,
+  )
+where
 
-import Data.Word(Word8)
-import Data.Bits (Bits(shift, clearBit, testBit))
+import Data.Bits (Bits (clearBit, shift, testBit))
+import Data.Word (Word8)
 
-data TransportFormat = LowOverhead | AnnexB
+data TransportFormat = LowOverhead | AnnexB | Json
   deriving (Eq, Ord, Show, Read, Bounded, Enum)
 
 data Parameters = Parameters
@@ -12,6 +19,27 @@ data Parameters = Parameters
     outputFormat :: TransportFormat,
     outputFileName :: String
   }
+  deriving (Eq, Show, Read)
+
+type ObuBytes = [Word8]
+
+data ObuType
+  = Reserved0
+  | ObuSequenceHeader
+  | ObuTemporalDelimiter
+  | ObuFrameHeader
+  | ObuTileGroup
+  | ObuMetadata
+  | ObuFrame
+  | ObuRedundantFrameHeader
+  | ObuTileList
+  | Reserved9
+  | Reserved10
+  | Reserved11
+  | Reserved12
+  | Reserved13
+  | Reserved14
+  | ObuPadding
   deriving (Eq, Show, Read)
 
 decodeLeb128 :: [Word8] -> Maybe (Integer, Integer, [Word8])

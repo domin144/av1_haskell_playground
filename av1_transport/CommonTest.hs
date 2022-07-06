@@ -1,4 +1,4 @@
-import Common(decodeLeb128)
+import Common (decodeLeb128)
 import Data.Maybe (isNothing)
 
 testLeb128_0 :: Bool

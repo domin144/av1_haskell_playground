@@ -1,11 +1,8 @@
 module AnnexB (decodeBitstream) where
 
+import Common (ObuBytes, decodeLeb128)
 import Data.Bits (Bits (clearBit, shift, testBit))
 import Data.Word (Word8)
-import GHC.Integer (decodeDoubleInteger)
-import Common(decodeLeb128)
-
-type ObuBytes = [Word8]
 
 maybeSplit :: Integral i => i -> [a] -> Maybe ([a], [a])
 maybeSplit n xs

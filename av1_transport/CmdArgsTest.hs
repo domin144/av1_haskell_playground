@@ -6,14 +6,17 @@ testPrintTransportFormatArg :: Bool
 testPrintTransportFormatArg =
   and
     [ printArg LowOverhead == "low_overhead",
-      printArg AnnexB == "annex_b"
+      printArg AnnexB == "annex_b",
+      printArg Json == "json"
     ]
 
 testParseTransportFormatArg :: Bool
 testParseTransportFormatArg =
   and
     [ parseArg "low_overhead" == Just LowOverhead,
-      parseArg "annex_b" == Just AnnexB
+      parseArg "annex_b" == Just AnnexB,
+      parseArg "json" == Just Json,
+      parseArg "invalid" == (Nothing :: Maybe TransportFormat)
     ]
 
 testParseArgs :: Bool

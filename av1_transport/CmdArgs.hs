@@ -17,6 +17,7 @@ class (Eq a, Enum a, Bounded a) => TextArg a where
 instance TextArg TransportFormat where
   printArg LowOverhead = "low_overhead"
   printArg AnnexB = "annex_b"
+  printArg Json = "json"
 
 data ArgId
   = InputFileFormatId
