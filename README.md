@@ -1,0 +1,1 @@
+This is my playground, where I learn to use haskell using AV-1 transport packing and unpacking as example.
