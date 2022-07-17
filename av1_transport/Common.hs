@@ -4,6 +4,8 @@ module Common
     ObuBytes,
     ObuType,
     decodeLeb128,
+    maybeSplit,
+    at
   )
 where
 
@@ -40,7 +42,7 @@ data ObuType
   | Reserved13
   | Reserved14
   | ObuPadding
-  deriving (Eq, Show, Read)
+  deriving (Eq, Show, Read, Enum, Bounded)
 
 decodeLeb128 :: [Word8] -> Maybe (Integer, Integer, [Word8])
 decodeLeb128 xs = decode xs 0 0
@@ -54,3 +56,18 @@ decodeLeb128 xs = decode xs 0 0
         currentData = toInteger (clearBit y 7)
         newAcc = shift currentData (7 * i) + acc
         moreDataFlag = testBit y 7
+
+maybeSplit :: Integral i => i -> [a] -> Maybe ([a], [a])
+maybeSplit n xs
+  | n < 0 = Nothing
+  | n == 0 = Just ([], xs)
+  | otherwise = case xs of
+    [] -> Nothing
+    y : ys -> case maybeSplit (n - 1) ys of
+      Nothing -> Nothing
+      Just (ys0, ys1) -> Just (y : ys0, ys1)
+
+at :: Integral a => [b] -> a -> Maybe b
+at [] _ = Nothing
+at (x : _) 0 = Just x
+at (_ : xs) i = at xs (i - 1)

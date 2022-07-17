@@ -1,9 +1,9 @@
-module ObuHeader(bytesToBits, decodeFixed) where
+module ObuHeader (bytesToBits, decodeFixed) where
 
 import Common (ObuBytes, ObuType)
 import Data.Bits (setBit, testBit)
 import Data.Word (Word8)
-import GHC.IO.Exception (IOErrorType(NoSuchThing))
+import GHC.IO.Exception (IOErrorType (NoSuchThing))
 
 data ObuHeader = ObuHeader
   { obuType :: ObuType,
@@ -28,8 +28,11 @@ decodeFixed n (x : xs) = case decodeFixed (n - 1) xs of
   Just (y, xsLeft) ->
     Just (if x then setBit y (fromInteger n - 1) else y, xsLeft)
 
-integerToObuType :: Integral a => a -> ObuType
-integerToObuType = error "TODO"
+-- integerToObuType :: Integer -> Maybe ObuType
+-- integerToObuType i = [(minBound :: ObuType) ..] `at` i
+
+integerToObuType :: Integer -> ObuType
+integerToObuType i = [(minBound :: ObuType) ..] !! fromIntegral i
 
 decodeObuHeader :: [Bool] -> Maybe (ObuHeader, [Bool])
 decodeObuHeader xs =

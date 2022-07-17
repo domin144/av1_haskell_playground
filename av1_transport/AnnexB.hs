@@ -4,17 +4,6 @@ import Common (ObuBytes, decodeLeb128)
 import Data.Bits (Bits (clearBit, shift, testBit))
 import Data.Word (Word8)
 
-maybeSplit :: Integral i => i -> [a] -> Maybe ([a], [a])
-maybeSplit n xs
-  | n < 0 = error "negative split index"
-  | n == 0 = Just ([], xs)
-  | null xs = Nothing
-  | otherwise =
-    let y : ys = xs
-     in case maybeSplit (n - 1) ys of
-          Nothing -> Nothing
-          Just (ys0, ys1) -> Just (y : ys0, ys1)
-
 readObu :: Integer -> [Word8] -> Maybe (ObuBytes, [Word8])
 readObu = maybeSplit
 
