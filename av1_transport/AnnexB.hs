@@ -9,43 +9,30 @@ readObu = Common.maybeSplit
 
 decodeFrameUnit :: Integer -> [Word8] -> Maybe ([ObuBytes], [Word8])
 decodeFrameUnit 0 xs = Just ([], xs)
-decodeFrameUnit size xs =
-  case decodeLeb128 xs of
-    Nothing -> Nothing
-    Just (obuSize, leb128Bytes, xs2) ->
-      case readObu obuSize xs2 of
-        Nothing -> Nothing
-        Just (obu, xs3) ->
-          if leb128Bytes + obuSize <= size
-            then case decodeFrameUnit (size - leb128Bytes - obuSize) xs3 of
-              Nothing -> Nothing
-              Just (moreObus, xs4) -> Just (obu : moreObus, xs4)
-            else Nothing
+decodeFrameUnit size xs = do
+  (obuSize, leb128Bytes, xs2) <- decodeLeb128 xs
+  (obu, xs3) <- readObu obuSize xs2
+  (moreObus, xs4) <-
+    if leb128Bytes + obuSize <= size
+      then decodeFrameUnit (size - leb128Bytes - obuSize) xs3
+      else Nothing
+  return (obu : moreObus, xs4)
 
 decodeTemporalUnit :: Integer -> [Word8] -> Maybe ([ObuBytes], [Word8])
 decodeTemporalUnit 0 xs = Just ([], xs)
-decodeTemporalUnit size xs =
-  case decodeLeb128 xs of
-    Nothing -> Nothing
-    Just (fuSize, leb128Bytes, xs2) ->
-      case decodeFrameUnit fuSize xs2 of
-        Nothing -> Nothing
-        Just (obus, xs3) ->
-          if leb128Bytes + fuSize <= size
-            then case decodeTemporalUnit (size - leb128Bytes - fuSize) xs3 of
-              Nothing -> Nothing
-              Just (moreObus, xs4) -> Just (obus ++ moreObus, xs4)
-            else Nothing
+decodeTemporalUnit size xs = do
+  (fuSize, leb128Bytes, xs2) <- decodeLeb128 xs
+  (obus, xs3) <- decodeFrameUnit fuSize xs2
+  (moreObus, xs4) <-
+    if leb128Bytes + fuSize <= size
+      then decodeTemporalUnit (size - leb128Bytes - fuSize) xs3
+      else Nothing
+  return (obus ++ moreObus, xs4)
 
 decodeBitstream :: [Word8] -> Maybe [ObuBytes]
 decodeBitstream [] = Just []
-decodeBitstream xs =
-  case decodeLeb128 xs of
-    Nothing -> Nothing
-    Just (tuSize, leb128Bytes, xs2) ->
-      case decodeTemporalUnit tuSize xs2 of
-        Nothing -> Nothing
-        Just (obus, xs3) ->
-          case decodeBitstream xs3 of
-            Nothing -> Nothing
-            Just moreObus -> Just (obus ++ moreObus)
+decodeBitstream xs = do
+  (tuSize, leb128Bytes, xs2) <- decodeLeb128 xs
+  (obus, xs3) <- decodeTemporalUnit tuSize xs2
+  moreObus <- decodeBitstream xs3
+  return (obus ++ moreObus)
