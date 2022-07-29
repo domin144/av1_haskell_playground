@@ -1,14 +1,14 @@
 module AnnexB (decodeBitstream) where
 
-import Common (ObuBytes, decodeLeb128)
+import Common (ObuBytes, decodeLeb128, maybeSplit)
 import Data.Bits (Bits (clearBit, shift, testBit))
 import Data.Word (Word8)
 
 readObu :: Integer -> [Word8] -> Maybe (ObuBytes, [Word8])
-readObu = maybeSplit
+readObu = Common.maybeSplit
 
 decodeFrameUnit :: Integer -> [Word8] -> Maybe ([ObuBytes], [Word8])
-decodeFrameUnit 0 [] = Just ([], [])
+decodeFrameUnit 0 xs = Just ([], xs)
 decodeFrameUnit size xs =
   case decodeLeb128 xs of
     Nothing -> Nothing
@@ -23,7 +23,7 @@ decodeFrameUnit size xs =
             else Nothing
 
 decodeTemporalUnit :: Integer -> [Word8] -> Maybe ([ObuBytes], [Word8])
-decodeTemporalUnit 0 [] = Just ([], [])
+decodeTemporalUnit 0 xs = Just ([], xs)
 decodeTemporalUnit size xs =
   case decodeLeb128 xs of
     Nothing -> Nothing
