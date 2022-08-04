@@ -35,53 +35,44 @@ integerToObuType :: Integer -> ObuType
 integerToObuType i = [(minBound :: ObuType) ..] !! fromIntegral i
 
 decodeObuHeader :: [Bool] -> Maybe (ObuHeader, [Bool])
-decodeObuHeader xs =
-  case decodeFixed 1 xs of
-    Nothing -> Nothing
-    Just (1, _) -> Nothing
-    Just (0, xs2) ->
-      case decodeFixed 2 xs2 of
-        Nothing -> Nothing
-        Just (obuType, xs3) ->
-          case decodeFixed 1 xs3 of
-            Nothing -> Nothing
-            Just (obuExtensionFlag, xs4) ->
-              case decodeFixed 1 xs4 of
-                Nothing -> Nothing
-                Just (obuHasSizeField, xs5) ->
-                  case decodeFixed 1 xs5 of
-                    Nothing -> Nothing
-                    Just (1, _) -> Nothing
-                    Just (0, xs6) ->
-                      if obuExtensionFlag == 1
-                        then case decodeFixed 3 xs6 of
-                          Nothing -> Nothing
-                          Just (temporalId, xs7) ->
-                            case decodeFixed 2 xs7 of
-                              Nothing -> Nothing
-                              Just (spatialId, xs8) ->
-                                case decodeFixed 3 xs8 of
-                                  Nothing -> Nothing
-                                  Just (0, xs9) ->
-                                    Just
-                                      ( ObuHeader
-                                          { obuType = integerToObuType obuType,
-                                            obuExtensionFlag = obuExtensionFlag == 1,
-                                            obuHasSizeField = obuHasSizeField == 1,
-                                            temporalId = temporalId,
-                                            spatialId = spatialId
-                                          },
-                                        xs9
-                                      )
-                                  Just (_, _) -> Nothing
-                        else
-                          Just
-                            ( ObuHeader
-                                { obuType = integerToObuType obuType,
-                                  obuExtensionFlag = obuExtensionFlag == 1,
-                                  obuHasSizeField = obuHasSizeField == 1,
-                                  temporalId = 0,
-                                  spatialId = 0
-                                },
-                              xs6
-                            )
+decodeObuHeader xs = do
+  (obuForbiddenBit, xs) <- decodeFixed 1 xs
+  if obuForbiddenBit == 0
+    then Just ()
+    else Nothing
+  (obuType, xs) <- decodeFixed 4 xs
+  (obuExtensionFlag, xs) <- decodeFixed 1 xs
+  (obuHasSizeField, xs) <- decodeFixed 1 xs
+  (obuReserved1Bit, xs) <- decodeFixed 1 xs
+  if obuReserved1Bit == 1
+    then Just ()
+    else Nothing
+  if obuExtensionFlag == 1
+    then do
+      (temporalId, xs) <- decodeFixed 3 xs
+      (spatialId, xs) <- decodeFixed 2 xs
+      (extensionHeaderReserved3Bits, xs) <- decodeFixed 3 xs
+      if extensionHeaderReserved3Bits == 0
+        then Just ()
+        else Nothing
+      return
+        ( ObuHeader
+            { obuType = integerToObuType obuType,
+              obuExtensionFlag = obuExtensionFlag == 1,
+              obuHasSizeField = obuHasSizeField == 1,
+              temporalId = temporalId,
+              spatialId = spatialId
+            },
+          xs
+        )
+    else
+      return
+        ( ObuHeader
+            { obuType = integerToObuType obuType,
+              obuExtensionFlag = obuExtensionFlag == 1,
+              obuHasSizeField = obuHasSizeField == 1,
+              temporalId = 0,
+              spatialId = 0
+            },
+          xs
+        )
