@@ -15,7 +15,7 @@ testDecodeBitstream =
           0x01, -- obu_lenght
           0xff -- data
         ]
-        == Just [[0xff]],
+        == Just [[[[0xff]]]],
       decodeBitstream
         [ 0x0e, -- temporal_unit_size
           0x06, -- frame_unit_size
@@ -33,7 +33,7 @@ testDecodeBitstream =
           0xff,
           0xff
         ]
-        == Just (replicate 4 (replicate 2 0xff))
+        == Just [replicate 2 (replicate 2 (replicate 2 0xff))]
     ]
 
 main = do

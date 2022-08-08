@@ -4,10 +4,13 @@ import Common (ObuBytes, decodeLeb128, maybeSplit)
 import Data.Bits (Bits (clearBit, shift, testBit))
 import Data.Word (Word8)
 
+type FrameUnit = [ObuBytes]
+type TemporalUnit = [FrameUnit]
+
 readObu :: Integer -> [Word8] -> Maybe (ObuBytes, [Word8])
 readObu = Common.maybeSplit
 
-decodeFrameUnit :: Integer -> [Word8] -> Maybe ([ObuBytes], [Word8])
+decodeFrameUnit :: Integer -> [Word8] -> Maybe (FrameUnit, [Word8])
 decodeFrameUnit 0 xs = Just ([], xs)
 decodeFrameUnit size xs = do
   (obuSize, leb128Bytes, xs) <- decodeLeb128 xs
@@ -18,21 +21,24 @@ decodeFrameUnit size xs = do
       else Nothing
   return (obu : moreObus, xs)
 
-decodeTemporalUnit :: Integer -> [Word8] -> Maybe ([ObuBytes], [Word8])
+decodeTemporalUnit :: Integer -> [Word8] -> Maybe (TemporalUnit, [Word8])
 decodeTemporalUnit 0 xs = Just ([], xs)
 decodeTemporalUnit size xs = do
   (fuSize, leb128Bytes, xs) <- decodeLeb128 xs
-  (obus, xs) <- decodeFrameUnit fuSize xs
-  (moreObus, xs) <-
+  (frameUnit, xs) <- decodeFrameUnit fuSize xs
+  (moreFus, xs) <-
     if leb128Bytes + fuSize <= size
       then decodeTemporalUnit (size - leb128Bytes - fuSize) xs
       else Nothing
-  return (obus ++ moreObus, xs)
+  return (frameUnit : moreFus, xs)
 
-decodeBitstream :: [Word8] -> Maybe [ObuBytes]
+decodeBitstream :: [Word8] -> Maybe [TemporalUnit]
 decodeBitstream [] = Just []
 decodeBitstream xs = do
   (tuSize, leb128Bytes, xs) <- decodeLeb128 xs
-  (obus, xs) <- decodeTemporalUnit tuSize xs
-  moreObus <- decodeBitstream xs
-  return (obus ++ moreObus)
+  (temporalUnit, xs) <- decodeTemporalUnit tuSize xs
+  moreTus <- decodeBitstream xs
+  return (temporalUnit : moreTus)
+
+flattenTheBitstream :: [TemporalUnit] -> [ObuBytes]
+flattenTheBitstream = concat . concat
