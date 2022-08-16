@@ -10,7 +10,8 @@ import System.IO (IOMode (ReadMode, WriteMode), hClose, openFile)
 transform :: TransportFormat -> TransportFormat -> [Word8] -> [Word8]
 transform AnnexB AnnexB input = concat obus
   where
-    Just obus = AnnexB.decodeBitstream input
+    Just structuredObus = AnnexB.decodeBitstream input
+    obus = AnnexB.flattenTheBitstream structuredObus
 transform _ _ _ = error "not implemented yet"
 
 process :: Parameters -> IO ()

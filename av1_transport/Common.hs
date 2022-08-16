@@ -2,7 +2,7 @@ module Common
   ( TransportFormat (..),
     Parameters (..),
     ObuBytes,
-    ObuType,
+    ObuType (..),
     decodeLeb128,
     maybeSplit,
     at
