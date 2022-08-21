@@ -5,11 +5,12 @@ module Common
     ObuType (..),
     decodeLeb128,
     maybeSplit,
-    at
+    at,
   )
 where
 
-import Data.Bits (Bits (clearBit, shift, testBit))
+import Data.Binary (encode)
+import Data.Bits (Bits (bit, clearBit, shift, testBit, (.&.)))
 import Data.Word (Word8)
 
 data TransportFormat = LowOverhead | AnnexB | Json
@@ -56,6 +57,18 @@ decodeLeb128 xs = decode xs 0 0
         currentData = toInteger (clearBit y 7)
         newAcc = shift currentData (7 * i) + acc
         moreDataFlag = testBit y 7
+
+encodeLeb128 :: Integer -> Maybe (Integer, [Word8])
+encodeLeb128 x =
+  encode [] x 0
+  where
+    encode :: [Word8] -> Integer -> Integer -> Maybe (Integer, [Word8])
+    encode bytes x i
+      | x < bit 7 = Just (i + 1, fromInteger x : bytes)
+      | i + 1 < 8 =
+        let currentData = x .&. (bit 7 - 1)
+         in encode (fromInteger currentData : bytes) (shift x (-7)) (i + 1)
+      | otherwise = Nothing
 
 maybeSplit :: Integral i => i -> [a] -> Maybe ([a], [a])
 maybeSplit n xs

@@ -1,8 +1,8 @@
 module AnnexB (decodeBitstream, flattenTheBitstream) where
 
 import Common (ObuBytes, ObuType (..), decodeLeb128, maybeSplit)
-import Data.Bits (Bits (clearBit, shift, testBit))
 import Data.Word (Word8)
+import Data.List (concat)
 
 type FrameUnit = [ObuBytes]
 
@@ -113,3 +113,7 @@ groupTheBistream obus = do
   tus <- splitToTus typedObus
   typedBitstream <- mapM splitToFus tus
   return $ map (map (map snd)) typedBitstream
+
+encodeFrameUnit :: FrameUnit -> Maybe [Word8]
+
+encodeBitstream :: [TemporalUnit] -> Maybe [Word8]
