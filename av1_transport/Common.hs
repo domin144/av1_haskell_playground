@@ -4,14 +4,18 @@ module Common
     ObuBytes,
     ObuType (..),
     decodeLeb128,
+    encodeLeb128,
     maybeSplit,
     at,
+    rewindToLeft,
+    rewindToRight
   )
 where
 
 import Data.Binary (encode)
-import Data.Bits (Bits (bit, clearBit, shift, testBit, (.&.)))
+import Data.Bits (Bits (bit, clearBit, shift, testBit, (.&.), (.|.)))
 import Data.Word (Word8)
+import Distribution.Simple.Utils (xargs)
 
 data TransportFormat = LowOverhead | AnnexB | Json
   deriving (Eq, Ord, Show, Read, Bounded, Enum)
@@ -58,15 +62,15 @@ decodeLeb128 xs = decode xs 0 0
         newAcc = shift currentData (7 * i) + acc
         moreDataFlag = testBit y 7
 
-encodeLeb128 :: Integer -> Maybe (Integer, [Word8])
+encodeLeb128 :: Integer -> Maybe ([Word8], Integer)
 encodeLeb128 x =
   encode [] x 0
   where
-    encode :: [Word8] -> Integer -> Integer -> Maybe (Integer, [Word8])
+    encode :: [Word8] -> Integer -> Integer -> Maybe ([Word8], Integer)
     encode bytes x i
-      | x < bit 7 = Just (i + 1, fromInteger x : bytes)
+      | x < bit 7 = Just (reverse (fromInteger x : bytes), i + 1)
       | i + 1 < 8 =
-        let currentData = x .&. (bit 7 - 1)
+        let currentData = (x .&. (bit 7 - 1)) .|. bit 7
          in encode (fromInteger currentData : bytes) (shift x (-7)) (i + 1)
       | otherwise = Nothing
 
@@ -84,3 +88,9 @@ at :: Integral a => [b] -> a -> Maybe b
 at [] _ = Nothing
 at (x : _) 0 = Just x
 at (_ : xs) i = at xs (i - 1)
+
+rewindToLeft :: [a] -> [a] -> [a]
+rewindToLeft = foldl (flip (:))
+
+rewindToRight :: [a] -> [a] -> [a]
+rewindToRight = flip rewindToLeft

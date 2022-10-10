@@ -1,6 +1,19 @@
-module AnnexB (decodeBitstream, flattenTheBitstream) where
+module AnnexB
+  ( decodeBitstream,
+    flattenTheBitstream,
+    groupTheBistream,
+    encodeBitstream,
+  )
+where
 
-import Common (ObuBytes, ObuType (..), decodeLeb128, maybeSplit)
+import Common
+  ( ObuBytes,
+    ObuType (..),
+    decodeLeb128,
+    encodeLeb128,
+    maybeSplit,
+    rewindToRight,
+  )
 import Data.Word (Word8)
 import Data.List (concat)
 
@@ -114,6 +127,50 @@ groupTheBistream obus = do
   typedBitstream <- mapM splitToFus tus
   return $ map (map (map snd)) typedBitstream
 
-encodeFrameUnit :: FrameUnit -> Maybe [Word8]
+encodeFrameUnit :: FrameUnit -> Maybe ([Word8], Integer)
+encodeFrameUnit obus =
+  --- step acc sz obus, where
+  ---   acc is reversed output
+  ---   sz is size of output
+  ---   obus are OBU's which are left to be processed
+  step [] 0 obus
+  where
+    step :: [Word8] -> Integer -> [ObuBytes] -> Maybe ([Word8], Integer)
+    step bytes sz [] = Just (reverse bytes, sz)
+    step bytes sz (obu : obus) = do
+      let obuLength = toInteger $ length obu
+      (codedObuLength, codedObuLengthLength) <- encodeLeb128 obuLength
+      step
+        (rewindToRight obu (rewindToRight codedObuLength bytes))
+        (sz + codedObuLengthLength + obuLength)
+        obus
+
+encodeTemporalUnit :: TemporalUnit -> Maybe ([Word8], Integer)
+encodeTemporalUnit fus =
+  step [] 0 fus
+  where
+    step :: [Word8] -> Integer -> [FrameUnit] -> Maybe ([Word8], Integer)
+    step bytes sz [] = Just (reverse bytes, sz)
+    step bytes sz (fu : fus) = do
+      (codedFu, lengthOfCodedFu) <- encodeFrameUnit fu
+      (codedLengthOfCodedFu, lengthOfCodedLengthOfCodedFu)
+        <- encodeLeb128 lengthOfCodedFu
+      step
+        (rewindToRight codedFu (rewindToRight codedLengthOfCodedFu bytes))
+        (sz + lengthOfCodedFu + lengthOfCodedLengthOfCodedFu)
+        fus
 
 encodeBitstream :: [TemporalUnit] -> Maybe [Word8]
+encodeBitstream tus =
+  step [] 0 tus
+  where
+    step :: [Word8] -> Integer -> [TemporalUnit] -> Maybe [Word8]
+    step bytes sz [] = Just (reverse bytes)
+    step bytes sz (tu : tus) = do
+      (codedTu, lengthOfCodedTu) <- encodeTemporalUnit tu
+      (codedLengthOfCodedTu, lengthOfCodedLengthOfCodedTu)
+        <- encodeLeb128 lengthOfCodedTu
+      step
+        (rewindToRight codedTu (rewindToRight codedLengthOfCodedTu bytes))
+        (sz + lengthOfCodedTu + lengthOfCodedLengthOfCodedTu)
+        tus
