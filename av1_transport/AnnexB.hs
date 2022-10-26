@@ -6,6 +6,11 @@ module AnnexB
   )
 where
 
+import BytestreamLayer
+  ( FrameUnit,
+    TemporalUnit,
+    TypedObu,
+  )
 import Common
   ( ObuBytes,
     ObuType (..),
@@ -14,14 +19,9 @@ import Common
     maybeSplit,
     rewindToRight,
   )
-import Data.Word (Word8)
 import Data.List (concat)
-
-type FrameUnit = [ObuBytes]
-
-type TemporalUnit = [FrameUnit]
-
-type TypedObu = (ObuType, ObuBytes)
+import Data.Word (Word8)
+import ObuHeader (ObuHeader (..), bytesToBits, decodeObuHeader)
 
 readObu :: Integer -> [Word8] -> Maybe (ObuBytes, [Word8])
 readObu = Common.maybeSplit
@@ -60,7 +60,9 @@ flattenTheBitstream :: [TemporalUnit] -> [ObuBytes]
 flattenTheBitstream = concat . concat
 
 getObuType :: ObuBytes -> Maybe ObuType
-getObuType = error "TODO"
+getObuType obuBytes = do
+  (header, _) <- decodeObuHeader $ bytesToBits obuBytes
+  return (obuType header)
 
 addTypeToObus :: [ObuBytes] -> Maybe [TypedObu]
 addTypeToObus = mapM obuToTypedObu
@@ -153,8 +155,8 @@ encodeTemporalUnit fus =
     step bytes sz [] = Just (reverse bytes, sz)
     step bytes sz (fu : fus) = do
       (codedFu, lengthOfCodedFu) <- encodeFrameUnit fu
-      (codedLengthOfCodedFu, lengthOfCodedLengthOfCodedFu)
-        <- encodeLeb128 lengthOfCodedFu
+      (codedLengthOfCodedFu, lengthOfCodedLengthOfCodedFu) <-
+        encodeLeb128 lengthOfCodedFu
       step
         (rewindToRight codedFu (rewindToRight codedLengthOfCodedFu bytes))
         (sz + lengthOfCodedFu + lengthOfCodedLengthOfCodedFu)
@@ -168,8 +170,8 @@ encodeBitstream tus =
     step bytes sz [] = Just (reverse bytes)
     step bytes sz (tu : tus) = do
       (codedTu, lengthOfCodedTu) <- encodeTemporalUnit tu
-      (codedLengthOfCodedTu, lengthOfCodedLengthOfCodedTu)
-        <- encodeLeb128 lengthOfCodedTu
+      (codedLengthOfCodedTu, lengthOfCodedLengthOfCodedTu) <-
+        encodeLeb128 lengthOfCodedTu
       step
         (rewindToRight codedTu (rewindToRight codedLengthOfCodedTu bytes))
         (sz + lengthOfCodedTu + lengthOfCodedLengthOfCodedTu)

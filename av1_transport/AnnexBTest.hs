@@ -46,6 +46,24 @@ testEncodeBitstream =
             0x02, -- frame_unit_size
             0x01, -- obu_lenght
             0xff -- data
+          ],
+      encodeBitstream [replicate 2 (replicate 2 (replicate 2 0xff))]
+        == Just
+          [ 0x0e, -- temporal_unit_size
+            0x06, -- frame_unit_size
+            0x02, -- obu_lenght
+            0xff,
+            0xff,
+            0x02, -- obu_lenght
+            0xff,
+            0xff,
+            0x06, -- frame_unit_size
+            0x02, -- obu_lenght
+            0xff,
+            0xff,
+            0x02, -- obu_lenght
+            0xff,
+            0xff
           ]
     ]
 

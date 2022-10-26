@@ -1,9 +1,8 @@
-module ObuHeader (bytesToBits, decodeFixed) where
+module ObuHeader (ObuHeader (..), bytesToBits, decodeFixed, decodeObuHeader) where
 
-import Common (ObuBytes, ObuType)
+import Common (ObuBytes, ObuType, at)
 import Data.Bits (setBit, testBit)
 import Data.Word (Word8)
-import GHC.IO.Exception (IOErrorType (NoSuchThing))
 
 data ObuHeader = ObuHeader
   { obuType :: ObuType,
@@ -28,11 +27,8 @@ decodeFixed n (x : xs) = case decodeFixed (n - 1) xs of
   Just (y, xsLeft) ->
     Just (if x then setBit y (fromInteger n - 1) else y, xsLeft)
 
--- integerToObuType :: Integer -> Maybe ObuType
--- integerToObuType i = [(minBound :: ObuType) ..] `at` i
-
-integerToObuType :: Integer -> ObuType
-integerToObuType i = [(minBound :: ObuType) ..] !! fromIntegral i
+integerToObuType :: Integer -> Maybe ObuType
+integerToObuType i = [(minBound :: ObuType) ..] `at` i
 
 decodeObuHeader :: [Bool] -> Maybe (ObuHeader, [Bool])
 decodeObuHeader xs = do
@@ -41,6 +37,7 @@ decodeObuHeader xs = do
     then Just ()
     else Nothing
   (obuType, xs) <- decodeFixed 4 xs
+  obuType <- integerToObuType obuType
   (obuExtensionFlag, xs) <- decodeFixed 1 xs
   (obuHasSizeField, xs) <- decodeFixed 1 xs
   (obuReserved1Bit, xs) <- decodeFixed 1 xs
@@ -57,7 +54,7 @@ decodeObuHeader xs = do
         else Nothing
       return
         ( ObuHeader
-            { obuType = integerToObuType obuType,
+            { obuType = obuType,
               obuExtensionFlag = obuExtensionFlag == 1,
               obuHasSizeField = obuHasSizeField == 1,
               temporalId = temporalId,
@@ -68,7 +65,7 @@ decodeObuHeader xs = do
     else
       return
         ( ObuHeader
-            { obuType = integerToObuType obuType,
+            { obuType = obuType,
               obuExtensionFlag = obuExtensionFlag == 1,
               obuHasSizeField = obuHasSizeField == 1,
               temporalId = 0,
