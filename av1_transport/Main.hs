@@ -7,12 +7,21 @@ import Data.Word (Word8)
 import System.Environment (getArgs)
 import System.IO (IOMode (ReadMode, WriteMode), hClose, openFile)
 
-transform :: TransportFormat -> TransportFormat -> [Word8] -> [Word8]
-transform AnnexB AnnexB input = concat obus
-  where
-    Just structuredObus = AnnexB.decodeBitstream input
-    obus = AnnexB.flattenTheBitstream structuredObus
-transform _ _ _ = error "not implemented yet"
+transform :: TransportFormat -> TransportFormat -> [Word8] -> Maybe [Word8]
+transform inputFormat outputFormat input = do
+  obus <- case inputFormat of
+    AnnexB -> do
+      structuredObus <- AnnexB.decodeBitstream input
+      return $ AnnexB.flattenTheBitstream structuredObus
+    LowOverhead -> Nothing
+    Json -> Nothing
+  case outputFormat of
+    AnnexB -> do
+      structuredObus <- AnnexB.groupTheBistream obus
+      AnnexB.encodeBitstream structuredObus
+    -- TODO: make sure the size are present
+    LowOverhead -> return $ concat obus
+    Json -> Nothing
 
 process :: Parameters -> IO ()
 process parsedArgs = do
@@ -21,8 +30,10 @@ process parsedArgs = do
   inputHandle <- openFile (inputFileName parsedArgs) ReadMode
   outputHandle <- openFile (outputFileName parsedArgs) WriteMode
   input <- B.hGetContents inputHandle
-  let output = transform (inputFormat parsedArgs) (outputFormat parsedArgs) (B.unpack input)
-  B.hPutStr outputHandle (B.pack output)
+  let maybeOutput = transform (inputFormat parsedArgs) (outputFormat parsedArgs) (B.unpack input)
+  case maybeOutput of
+    Just output -> B.hPutStr outputHandle (B.pack output)
+    Nothing -> putStrLn "Failed to convert file"
   hClose inputHandle
   hClose outputHandle
 
