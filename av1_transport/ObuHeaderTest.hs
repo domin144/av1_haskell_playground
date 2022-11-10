@@ -23,7 +23,8 @@ bytesToBitsTest =
 
 decodeFixedTest =
   and
-    [ decodeFixed 1 [] == Nothing,
+    [ decodeFixed 0 [] == Just (0, []),
+      decodeFixed 1 [] == Nothing,
       decodeFixed 3 [True, True, False, False] == Just (6, [False])
     ]
 
