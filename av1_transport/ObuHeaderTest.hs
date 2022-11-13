@@ -83,7 +83,7 @@ encodedTestHeader01 =
     True, -- obu_type = OBU_SEQUENCE_HEADER
     False, -- obu_extension_flag
     False, -- obu_has_size_field
-    True -- obu_reserved_1bit
+    False -- obu_reserved_1bit
   ]
 
 testHeader02 =
@@ -103,7 +103,7 @@ encodedTestHeader02 =
     False, -- obu_type = OBU_TILE_LIST
     True, -- obu_extension_flag
     True, -- obu_has_size_field
-    True, -- obu_reserved_1bit
+    False, -- obu_reserved_1bit
     False,
     True,
     True, -- temporal_id
@@ -116,8 +116,8 @@ encodedTestHeader02 =
 
 decodeObuHeaderTest =
   and
-    [ decodeObuHeader encodedTestHeader01 == Just (testHeader01, []),
-      decodeObuHeader encodedTestHeader02 == Just (testHeader02, [])
+    [ decodeObuHeader encodedTestHeader01 == Right (testHeader01, []),
+      decodeObuHeader encodedTestHeader02 == Right (testHeader02, [])
     ]
 
 encodeObuHeaderTest =
@@ -127,6 +127,7 @@ encodeObuHeaderTest =
   ]
 
 main = do
+  putStrLn "ObuHeaderTest"
   putStrLn $ "bytesToBitsTest : " ++ show bytesToBitsTest
   putStrLn $ "bitsToBytesTest : " ++ show bitsToBytesTest
   putStrLn $ "decodeFixedTest : " ++ show decodeFixedTest

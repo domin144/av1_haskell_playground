@@ -6,10 +6,11 @@ module ObuHeader
     encodeFixed,
     decodeObuHeader,
     encodeObuHeader,
+    headerSize,
   )
 where
 
-import Common (ObuBytes, ObuType, at)
+import Common (ObuBytes, ObuType, Result, at, wrapMaybe, wrapResult)
 import Data.Bits (clearBit, setBit, testBit)
 import Data.Word (Word8)
 
@@ -61,28 +62,31 @@ encodeFixed n y = do
 integerToObuType :: Integer -> Maybe ObuType
 integerToObuType i = [(minBound :: ObuType) ..] `at` i
 
-decodeObuHeader :: [Bool] -> Maybe (ObuHeader, [Bool])
+decodeObuHeader :: [Bool] -> Result (ObuHeader, [Bool])
 decodeObuHeader xs = do
-  (obuForbiddenBit, xs) <- decodeFixed 1 xs
+  (obuForbiddenBit, xs) <- wrapMaybe "obu_forbidden_bit" $ decodeFixed 1 xs
   if obuForbiddenBit == 0
-    then Just ()
-    else Nothing
-  (obuType, xs) <- decodeFixed 4 xs
-  obuType <- integerToObuType obuType
-  (obuExtensionFlag, xs) <- decodeFixed 1 xs
-  (obuHasSizeField, xs) <- decodeFixed 1 xs
-  (obuReserved1Bit, xs) <- decodeFixed 1 xs
-  if obuReserved1Bit == 1
-    then Just ()
-    else Nothing
+    then Right ()
+    else Left "invalid value of obu_forbidden_bit"
+  (obuType, xs) <- wrapMaybe "obu_type" $ decodeFixed 4 xs
+  obuType <-
+    wrapMaybe "invalid value of obu_type" $ integerToObuType obuType
+  (obuExtensionFlag, xs) <- wrapMaybe "obu_extension_flag" $ decodeFixed 1 xs
+  (obuHasSizeField, xs) <- wrapMaybe "obu_has_size_field" $ decodeFixed 1 xs
+  (obuReserved1Bit, xs) <- wrapMaybe "obu_reserved_1bit" $ decodeFixed 1 xs
+  if obuReserved1Bit == 0
+    then Right ()
+    else Left "invalid value of obu_reserved_1bit"
   if obuExtensionFlag == 1
     then do
-      (temporalId, xs) <- decodeFixed 3 xs
-      (spatialId, xs) <- decodeFixed 2 xs
-      (extensionHeaderReserved3Bits, xs) <- decodeFixed 3 xs
+      (temporalId, xs) <- wrapMaybe "temporal_id" $ decodeFixed 3 xs
+      (spatialId, xs) <- wrapMaybe "spatial_id" $ decodeFixed 2 xs
+      (extensionHeaderReserved3Bits, xs) <-
+        wrapMaybe "extension_header_reserved_3bits" $
+          decodeFixed 3 xs
       if extensionHeaderReserved3Bits == 0
-        then Just ()
-        else Nothing
+        then Right ()
+        else Left "invalid value of extension_header_reserved_3bits"
       return
         ( ObuHeader
             { obuType = obuType,
@@ -113,7 +117,7 @@ encodeObuHeader header = do
     encodeFixed 1 $ toInteger $ fromEnum $ obuExtensionFlag header
   obuHasSizeFieldBits <-
     encodeFixed 1 $ toInteger $ fromEnum $ obuHasSizeField header
-  let obuReserved1Bit = True
+  let obuReserved1Bit = False
   if obuExtensionFlag header
     then do
       temporalIdBits <- encodeFixed 3 $ fromInteger $ temporalId header
@@ -137,3 +141,6 @@ encodeObuHeader header = do
             ++ obuHasSizeFieldBits
             ++ [obuReserved1Bit]
         )
+
+headerSize :: ObuHeader -> Integer
+headerSize header = if obuExtensionFlag header then 2 else 1

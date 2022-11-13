@@ -68,7 +68,9 @@ decodeBitstream xs = do
 
 getObuType :: ObuBytes -> Maybe ObuType
 getObuType obuBytes = do
-  (header, _) <- decodeObuHeader $ bytesToBits obuBytes
+  (header, _) <- case decodeObuHeader $ bytesToBits obuBytes of
+    Right x -> Just x
+    Left _ -> Nothing
   return (obuType header)
 
 addTypeToObus :: [ObuBytes] -> Maybe [TypedObu]

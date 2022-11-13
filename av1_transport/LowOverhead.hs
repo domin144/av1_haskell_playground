@@ -4,15 +4,24 @@ module LowOverhead
   )
 where
 
-import Common (ObuBytes, decodeLeb128, encodeLeb128)
+import Common
+  ( ObuBytes,
+    Result,
+    decodeLeb128,
+    encodeLeb128,
+    wrapMaybe,
+    wrapResult,
+  )
 import Data.List (concat)
 import Data.Word (Word8)
+import Distribution.Simple.Utils (xargs)
 import ObuHeader
   ( ObuHeader (..),
     bitsToBytes,
     bytesToBits,
     decodeObuHeader,
     encodeObuHeader,
+    headerSize,
   )
 
 maybeSplitAt :: Integer -> [a] -> Maybe ([a], [a])
@@ -24,11 +33,11 @@ maybeSplitAt n (x : xs)
     return (x : left, right)
   | otherwise = Nothing
 
-decodeHeader :: [Word8] -> Maybe (ObuHeader, [Word8])
+decodeHeader :: [Word8] -> Result (ObuHeader, [Word8])
 decodeHeader bytes = do
-  let bits = bytesToBits bytes
-  (header, bits) <- decodeObuHeader bits
-  return (header, bitsToBytes bits)
+  (header, _) <- decodeObuHeader $ bytesToBits bytes
+  (_, bytes) <- wrapMaybe "split" $ maybeSplitAt (headerSize header) bytes
+  return (header, bytes)
 
 encodeHeader :: ObuHeader -> Maybe [Word8]
 encodeHeader header = do
@@ -41,12 +50,16 @@ decodeSize header bytes =
     then decodeLeb128 bytes
     else Nothing
 
-decodeBitstream :: [Word8] -> Maybe [ObuBytes]
+decodeBitstream :: [Word8] -> Result [ObuBytes]
+decodeBitstream [] = Right []
 decodeBitstream bytes = do
-  (header, bytesPastHeader) <- decodeHeader bytes
-  (obuSize, obuSizeSize, bytesPastSize) <- decodeSize header bytes
-  let headerSize = if obuExtensionFlag header then 2 else 1
-  (obu, bytes) <- maybeSplitAt (headerSize + obuSizeSize + obuSize) bytes
+  (header, bytesPastHeader) <- wrapResult "header" $ decodeHeader bytes
+  (obuSize, obuSizeSize, bytesPastSize) <-
+    wrapMaybe "size" $ decodeSize header bytesPastHeader
+  let headerSize = ObuHeader.headerSize header
+  (obu, bytes) <-
+    wrapMaybe "split" $
+      maybeSplitAt (headerSize + obuSizeSize + obuSize) bytes
   obus <- decodeBitstream bytes
   return (obu : obus)
 
@@ -57,12 +70,13 @@ encodeBitstream obus = do
   where
     encodeObu :: ObuBytes -> Maybe [Word8]
     encodeObu bytes = do
-      (header, bytesPastHeader) <- decodeHeader bytes
+      (header, bytesPastHeader) <- case decodeHeader bytes of
+        Right x -> Just x
+        Left _ -> Nothing
       if obuHasSizeField header
         then return bytes
         else do
-          let header = header {obuHasSizeField = True}
-          let headerSize = if obuExtensionFlag header then 2 else 1
+          header <- return $ header {obuHasSizeField = True}
           let obuSize = toInteger $ length bytesPastHeader
           encodedHeader <- encodeHeader header
           (encodedSize, encodedSizeSize) <- encodeLeb128 obuSize

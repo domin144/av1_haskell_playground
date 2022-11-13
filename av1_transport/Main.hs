@@ -16,14 +16,14 @@ import System.IO (IOMode (ReadMode, WriteMode), hClose, openFile)
 
 transform :: TransportFormat -> TransportFormat -> [Word8] -> Result [Word8]
 transform inputFormat outputFormat input = do
-  obus <- wrapMaybe "decode: " $ case inputFormat of
-    AnnexB -> AnnexB.decodeBitstream input
-    LowOverhead -> LowOverhead.decodeBitstream input
-    Json -> Nothing
-  wrapMaybe "encode: " $ case outputFormat of
-    AnnexB -> AnnexB.encodeBitstream obus
-    LowOverhead -> LowOverhead.encodeBitstream obus
-    Json -> Nothing
+  obus <- wrapResult "decode" $ case inputFormat of
+    AnnexB -> wrapMaybe "annex B" $ AnnexB.decodeBitstream input
+    LowOverhead -> wrapResult "low overhead" $ LowOverhead.decodeBitstream input
+    Json -> Left "JSON input not implemented yet"
+  wrapResult "encode: " $ case outputFormat of
+    AnnexB -> wrapMaybe "annex B" $ AnnexB.encodeBitstream obus
+    LowOverhead -> wrapMaybe "low overhead" $ LowOverhead.encodeBitstream obus
+    Json -> Left "JSON output not implemented yet"
 
 process :: Parameters -> IO ()
 process parsedArgs = do

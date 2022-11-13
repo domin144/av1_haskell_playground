@@ -5,8 +5,8 @@ decodeBitstream = decodeStructuredBitstream
 
 encodeBitstream = encodeStructuredBitstream
 
-testDecodeBitstream :: Bool
-testDecodeBitstream =
+decodeBitstreamTest :: Bool
+decodeBitstreamTest =
   and
     [ decodeBitstream [] == Just [],
       decodeBitstream [0x00] == Just [[]],
@@ -40,8 +40,8 @@ testDecodeBitstream =
         == Just [replicate 2 (replicate 2 (replicate 2 0xff))]
     ]
 
-testEncodeBitstream :: Bool
-testEncodeBitstream =
+encodeBitstreamTest :: Bool
+encodeBitstreamTest =
   and
     [ encodeBitstream [] == Just [],
       encodeBitstream [[[[0xff]]]]
@@ -72,5 +72,6 @@ testEncodeBitstream =
     ]
 
 main = do
-  putStrLn $ "testDecodeBitstream : " ++ show testDecodeBitstream
-  putStrLn $ "testEncodeBitstream : " ++ show testEncodeBitstream
+  putStrLn "AnnexBTest"
+  putStrLn $ "decodeBitstreamTest : " ++ show decodeBitstreamTest
+  putStrLn $ "encodeBitstreamTest : " ++ show encodeBitstreamTest
