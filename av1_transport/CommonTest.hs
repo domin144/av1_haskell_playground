@@ -14,10 +14,10 @@ testDecodeLeb128 =
 testEncodeLeb128 :: Bool
 testEncodeLeb128 =
   and
-    [ encodeLeb128 0 == Just (1, [0x00]),
-      encodeLeb128 0x7f == Just (1, [0x7f]),
-      encodeLeb128 0x1f5 == Just (2, [0xf5, 0x03]),
-      encodeLeb128 0xffffffffffffff == Just (8, replicate 7 0xff ++ [0x7f]),
+    [ encodeLeb128 0 == Just ([0x00], 1),
+      encodeLeb128 0x7f == Just ([0x7f], 1),
+      encodeLeb128 0x1f5 == Just ([0xf5, 0x03], 2),
+      encodeLeb128 0xffffffffffffff == Just (replicate 7 0xff ++ [0x7f], 8),
       isNothing (encodeLeb128 0x100000000000000)
     ]
 
@@ -49,7 +49,7 @@ testEncodeDecodeLeb128 =
   where
     test x =
       do
-        (encodedSize, encodedBytes) <- encodeLeb128 x
+        (encodedBytes, encodedSize) <- encodeLeb128 x
         (decodedX, decodedSize, remainder) <- decodeLeb128 encodedBytes
         return (x == decodedX && null remainder)
         == Just True
