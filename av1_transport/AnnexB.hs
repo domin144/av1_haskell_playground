@@ -1,8 +1,10 @@
 module AnnexB
   ( decodeBitstream,
-    flattenTheBitstream,
-    groupTheBistream,
     encodeBitstream,
+    decodeStructuredBitstream,
+    encodeStructuredBitstream,
+    groupTheBistream,
+    flattenTheBitstream,
   )
 where
 
@@ -48,16 +50,21 @@ decodeTemporalUnit size xs = do
       else Nothing
   return (frameUnit : moreFus, xs)
 
-decodeBitstream :: [Word8] -> Maybe [TemporalUnit]
-decodeBitstream [] = Just []
-decodeBitstream xs = do
+decodeStructuredBitstream :: [Word8] -> Maybe [TemporalUnit]
+decodeStructuredBitstream [] = Just []
+decodeStructuredBitstream xs = do
   (tuSize, leb128Bytes, xs) <- decodeLeb128 xs
   (temporalUnit, xs) <- decodeTemporalUnit tuSize xs
-  moreTus <- decodeBitstream xs
+  moreTus <- decodeStructuredBitstream xs
   return (temporalUnit : moreTus)
 
 flattenTheBitstream :: [TemporalUnit] -> [ObuBytes]
 flattenTheBitstream = concat . concat
+
+decodeBitstream :: [Word8] -> Maybe [ObuBytes]
+decodeBitstream xs = do
+  structuredBitstream <- decodeStructuredBitstream xs
+  return $ flattenTheBitstream structuredBitstream
 
 getObuType :: ObuBytes -> Maybe ObuType
 getObuType obuBytes = do
@@ -162,8 +169,8 @@ encodeTemporalUnit fus =
         (sz + lengthOfCodedFu + lengthOfCodedLengthOfCodedFu)
         fus
 
-encodeBitstream :: [TemporalUnit] -> Maybe [Word8]
-encodeBitstream tus =
+encodeStructuredBitstream :: [TemporalUnit] -> Maybe [Word8]
+encodeStructuredBitstream tus =
   step [] 0 tus
   where
     step :: [Word8] -> Integer -> [TemporalUnit] -> Maybe [Word8]
@@ -176,3 +183,8 @@ encodeBitstream tus =
         (rewindToRight codedTu (rewindToRight codedLengthOfCodedTu bytes))
         (sz + lengthOfCodedTu + lengthOfCodedLengthOfCodedTu)
         tus
+
+encodeBitstream :: [ObuBytes] -> Maybe [Word8]
+encodeBitstream xs = do
+  structuredBitstream <- groupTheBistream xs
+  encodeStructuredBitstream structuredBitstream

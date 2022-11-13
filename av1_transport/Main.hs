@@ -1,6 +1,12 @@
 import qualified AnnexB
 import CmdArgs (parseArgs)
-import Common (Parameters (..), TransportFormat (..))
+import Common
+  ( Parameters (..),
+    Result,
+    TransportFormat (..),
+    wrapMaybe,
+    wrapResult,
+  )
 import qualified Data.ByteString.Lazy as B
 import Data.List (concat)
 import Data.Word (Word8)
@@ -8,18 +14,14 @@ import qualified LowOverhead
 import System.Environment (getArgs)
 import System.IO (IOMode (ReadMode, WriteMode), hClose, openFile)
 
-transform :: TransportFormat -> TransportFormat -> [Word8] -> Maybe [Word8]
+transform :: TransportFormat -> TransportFormat -> [Word8] -> Result [Word8]
 transform inputFormat outputFormat input = do
-  obus <- case inputFormat of
-    AnnexB -> do
-      structuredObus <- AnnexB.decodeBitstream input
-      return $ AnnexB.flattenTheBitstream structuredObus
+  obus <- wrapMaybe "decode: " $ case inputFormat of
+    AnnexB -> AnnexB.decodeBitstream input
     LowOverhead -> LowOverhead.decodeBitstream input
     Json -> Nothing
-  case outputFormat of
-    AnnexB -> do
-      structuredObus <- AnnexB.groupTheBistream obus
-      AnnexB.encodeBitstream structuredObus
+  wrapMaybe "encode: " $ case outputFormat of
+    AnnexB -> AnnexB.encodeBitstream obus
     LowOverhead -> LowOverhead.encodeBitstream obus
     Json -> Nothing
 
@@ -32,8 +34,8 @@ process parsedArgs = do
   input <- B.hGetContents inputHandle
   let maybeOutput = transform (inputFormat parsedArgs) (outputFormat parsedArgs) (B.unpack input)
   case maybeOutput of
-    Just output -> B.hPutStr outputHandle (B.pack output)
-    Nothing -> putStrLn "Failed to convert file"
+    Right output -> B.hPutStr outputHandle (B.pack output)
+    Left error -> putStrLn $ "Failed to convert file: " ++ error
   hClose inputHandle
   hClose outputHandle
 

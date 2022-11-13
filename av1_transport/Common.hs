@@ -8,7 +8,10 @@ module Common
     maybeSplit,
     at,
     rewindToLeft,
-    rewindToRight
+    rewindToRight,
+    Result,
+    wrapResult,
+    wrapMaybe,
   )
 where
 
@@ -94,3 +97,13 @@ rewindToLeft = foldl (flip (:))
 
 rewindToRight :: [a] -> [a] -> [a]
 rewindToRight = flip rewindToLeft
+
+type Result = Either String
+
+wrapResult :: String -> Result a -> Result a
+wrapResult comment (Left error) = Left (comment ++ ": " ++ error)
+wrapResult _ (Right result) = Right result
+
+wrapMaybe :: String -> Maybe a -> Result a
+wrapMaybe comment Nothing = Left comment
+wrapMaybe _ (Just result) = Right result

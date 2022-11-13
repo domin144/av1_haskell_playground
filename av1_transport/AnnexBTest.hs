@@ -1,5 +1,9 @@
-import AnnexB (decodeBitstream, encodeBitstream)
+import AnnexB (decodeStructuredBitstream, encodeStructuredBitstream)
 import Data.Maybe (isNothing)
+
+decodeBitstream = decodeStructuredBitstream
+
+encodeBitstream = encodeStructuredBitstream
 
 testDecodeBitstream :: Bool
 testDecodeBitstream =
