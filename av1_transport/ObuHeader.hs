@@ -3,6 +3,7 @@ module ObuHeader
     bytesToBits,
     bitsToBytes,
     decodeFixed,
+    encodeFixed,
     decodeObuHeader,
     encodeObuHeader,
   )
@@ -19,6 +20,7 @@ data ObuHeader = ObuHeader
     temporalId :: Integer,
     spatialId :: Integer
   }
+  deriving (Eq, Show)
 
 -- AV1 uses the awful scheme of reading bytes from the MSB side
 bytesToBits :: [Word8] -> [Bool]
@@ -36,7 +38,7 @@ bitsToBytes = moreBytes 0 7
     moreBytes byte 0 (bit : bits) =
       setBitIf byte 0 bit : moreBytes 0 7 bits
     moreBytes byte bitIndex (bit : bits) =
-      moreBytes (setBitIf byte 0 bit) (bitIndex - 1) bits
+      moreBytes (setBitIf byte bitIndex bit) (bitIndex - 1) bits
     setBitIf :: Word8 -> Int -> Bool -> Word8
     setBitIf byte _ False = byte
     setBitIf byte bitIndex True = setBit byte bitIndex
@@ -53,7 +55,7 @@ encodeFixed 0 0 = Just []
 encodeFixed 0 _ = Nothing
 encodeFixed n y = do
   let x = testBit y (fromInteger n - 1)
-  xs <- encodeFixed (n - 1) (clearBit (fromInteger n - 1) y)
+  xs <- encodeFixed (n - 1) (clearBit y (fromInteger n - 1))
   return (x : xs)
 
 integerToObuType :: Integer -> Maybe ObuType
@@ -107,8 +109,10 @@ encodeObuHeader :: ObuHeader -> Maybe [Bool]
 encodeObuHeader header = do
   let obuForbiddenBit = False
   obuTypeBits <- encodeFixed 4 $ toInteger $ fromEnum $ obuType header
-  obuExtensionFlagBits <- encodeFixed 1 $ toInteger $ obuExtensionFlag header
-  obuHasSizeFieldBits <- encodeFixed 1 $ toInteger $ obuHasSizeField header
+  obuExtensionFlagBits <-
+    encodeFixed 1 $ toInteger $ fromEnum $ obuExtensionFlag header
+  obuHasSizeFieldBits <-
+    encodeFixed 1 $ toInteger $ fromEnum $ obuHasSizeField header
   let obuReserved1Bit = True
   if obuExtensionFlag header
     then do
