@@ -4,6 +4,7 @@ import Common (Parameters (..), TransportFormat (..))
 import qualified Data.ByteString.Lazy as B
 import Data.List (concat)
 import Data.Word (Word8)
+import qualified LowOverhead
 import System.Environment (getArgs)
 import System.IO (IOMode (ReadMode, WriteMode), hClose, openFile)
 
@@ -13,14 +14,13 @@ transform inputFormat outputFormat input = do
     AnnexB -> do
       structuredObus <- AnnexB.decodeBitstream input
       return $ AnnexB.flattenTheBitstream structuredObus
-    LowOverhead -> Nothing
+    LowOverhead -> LowOverhead.decodeBitstream input
     Json -> Nothing
   case outputFormat of
     AnnexB -> do
       structuredObus <- AnnexB.groupTheBistream obus
       AnnexB.encodeBitstream structuredObus
-    -- TODO: make sure the size are present
-    LowOverhead -> return $ concat obus
+    LowOverhead -> LowOverhead.encodeBitstream obus
     Json -> Nothing
 
 process :: Parameters -> IO ()
