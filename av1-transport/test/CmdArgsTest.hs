@@ -1,3 +1,5 @@
+module CmdArgsTest (cmdArgsTest) where
+
 import CmdArgs
 import Common
 import Data.List (all)
@@ -38,7 +40,7 @@ testParseArgs =
         outputFileName = "output.txt"
       }
 
-main = do
+cmdArgsTest = do
   putStrLn $ "testPrintTransportFormatArg : " ++ show testPrintTransportFormatArg
   putStrLn $ "testParseTransportFormatArg : " ++ show testParseTransportFormatArg
   putStrLn $ "testParseArgs : " ++ show testParseArgs

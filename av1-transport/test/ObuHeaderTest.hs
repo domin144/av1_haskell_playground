@@ -1,3 +1,5 @@
+module ObuHeaderTest (obuHeaderTest) where
+
 import Common (ObuType (..))
 import Data.Maybe (isNothing)
 import ObuHeader
@@ -126,7 +128,7 @@ encodeObuHeaderTest =
     encodeObuHeader testHeader02 == Just encodedTestHeader02
   ]
 
-main = do
+obuHeaderTest = do
   putStrLn "ObuHeaderTest"
   putStrLn $ "bytesToBitsTest : " ++ show bytesToBitsTest
   putStrLn $ "bitsToBytesTest : " ++ show bitsToBytesTest

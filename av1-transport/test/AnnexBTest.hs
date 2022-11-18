@@ -1,3 +1,5 @@
+module AnnexBTest (annexBTest) where
+
 import AnnexB (decodeStructuredBitstream, encodeStructuredBitstream)
 import Data.Maybe (isNothing)
 
@@ -71,7 +73,7 @@ encodeBitstreamTest =
           ]
     ]
 
-main = do
+annexBTest = do
   putStrLn "AnnexBTest"
   putStrLn $ "decodeBitstreamTest : " ++ show decodeBitstreamTest
   putStrLn $ "encodeBitstreamTest : " ++ show encodeBitstreamTest

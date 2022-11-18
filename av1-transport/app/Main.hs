@@ -1,3 +1,5 @@
+module Main (main) where
+
 import qualified AnnexB
 import CmdArgs (parseArgs)
 import Common
@@ -39,6 +41,7 @@ process parsedArgs = do
   hClose inputHandle
   hClose outputHandle
 
+main :: IO ()
 main = do
   args <- getArgs
   let parsedArgs = parseArgs args

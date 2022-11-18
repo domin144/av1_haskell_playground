@@ -1,0 +1,78 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.35.0.
+--
+-- see: https://github.com/sol/hpack
+
+name:           av1-transport
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/domin144/av1_haskell_playground#readme>
+homepage:       https://github.com/domin144/av1_haskell_playground#readme
+bug-reports:    https://github.com/domin144/av1_haskell_playground/issues
+author:         Dominik Wójt
+maintainer:     domin144@o2.pl
+copyright:      2022 Dominik Wójt
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/domin144/av1_haskell_playground
+
+library
+  exposed-modules:
+      AnnexB
+      BytestreamLayer
+      CmdArgs
+      Common
+      Json
+      LowOverhead
+      ObuHeader
+  other-modules:
+      Paths_av1_transport
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      Cabal
+    , base >=4.7 && <5
+    , binary
+    , bytestring
+    , containers
+  default-language: Haskell2010
+
+executable av1-transport-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_av1_transport
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      av1-transport
+    , base >=4.7 && <5
+    , bytestring
+  default-language: Haskell2010
+
+test-suite av1-transport-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      AnnexBTest
+      CmdArgsTest
+      CommonTest
+      JsonTest
+      LowOverheadTest
+      ObuHeaderTest
+      Paths_av1_transport
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      av1-transport
+    , base >=4.7 && <5
+  default-language: Haskell2010

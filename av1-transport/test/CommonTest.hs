@@ -1,3 +1,5 @@
+module CommonTest (commonTest) where
+
 import Common (at, decodeLeb128, encodeLeb128, maybeSplit)
 import Data.Maybe (isNothing)
 
@@ -73,7 +75,8 @@ testAt =
       at [10, 11, 12] 1 == Just 11
     ]
 
-main = do
+commonTest = do
+  putStrLn "CommonTest"
   putStrLn $ "testDecodeLeb128 : " ++ show testDecodeLeb128
   putStrLn $ "testEncodeLeb128 : " ++ show testEncodeLeb128
   putStrLn $ "testEncodeDecodeLeb128 : " ++ show testEncodeDecodeLeb128

@@ -1,3 +1,5 @@
+module LowOverheadTest (lowOverheadTest) where
+
 import Common (ObuBytes)
 import LowOverhead (decodeBitstream, encodeBitstream)
 
@@ -56,7 +58,7 @@ encodeBitstreamTest =
       encodeBitstream [obu01NoSize, obu02NoSize] == Just (obu01 ++ obu02)
     ]
 
-main = do
+lowOverheadTest = do
   putStrLn "LowOverheadTest"
   putStrLn $ "decodeBitstreamTest : " ++ show decodeBitstreamTest
   putStrLn $ "encodeBitstreamTest : " ++ show encodeBitstreamTest
