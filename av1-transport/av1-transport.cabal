@@ -43,6 +43,7 @@ library
     , binary
     , bytestring
     , containers
+    , utf8-string
   default-language: Haskell2010
 
 executable av1-transport-exe
@@ -75,4 +76,5 @@ test-suite av1-transport-test
   build-depends:
       av1-transport
     , base >=4.7 && <5
+    , utf8-string
   default-language: Haskell2010

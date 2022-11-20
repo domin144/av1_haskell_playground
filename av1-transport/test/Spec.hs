@@ -3,6 +3,7 @@ import CmdArgsTest (cmdArgsTest)
 import CommonTest (commonTest)
 import LowOverheadTest (lowOverheadTest)
 import ObuHeaderTest (obuHeaderTest)
+import JsonTest (jsonTest)
 
 main :: IO ()
 main = do
@@ -11,3 +12,4 @@ main = do
   obuHeaderTest
   lowOverheadTest
   annexBTest
+  jsonTest
