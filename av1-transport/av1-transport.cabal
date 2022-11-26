@@ -69,6 +69,7 @@ test-suite av1-transport-test
       JsonTest
       LowOverheadTest
       ObuHeaderTest
+      TestTree
       Paths_av1_transport
   hs-source-dirs:
       test

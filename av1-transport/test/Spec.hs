@@ -1,9 +1,17 @@
 import AnnexBTest (annexBTest)
 import CmdArgsTest (cmdArgsTest)
 import CommonTest (commonTest)
+import JsonTest (jsonTest)
 import LowOverheadTest (lowOverheadTest)
 import ObuHeaderTest (obuHeaderTest)
-import JsonTest (jsonTest)
+import TestTree (TestTree (SubTree, Test), process)
+
+someTest :: TestTree
+someTest =
+  SubTree "SomeTest"
+    [ Test "Test" True,
+      Test "Test2" False
+    ]
 
 main :: IO ()
 main = do
@@ -13,3 +21,4 @@ main = do
   lowOverheadTest
   annexBTest
   jsonTest
+  putStr $ fst $ process someTest
