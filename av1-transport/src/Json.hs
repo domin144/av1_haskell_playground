@@ -23,5 +23,5 @@ import ObuHeader
 decodeBitstream :: [Word8] -> Result [ObuBytes]
 decodeBitstream = error "TODO"
 
-encodeBitstream :: [ObuBytes] -> Maybe [Word8]
+encodeBitstream :: [ObuBytes] -> Result [Word8]
 encodeBitstream = error "TODO"
