@@ -1,46 +1,62 @@
 module CmdArgsTest (cmdArgsTest) where
 
-import CmdArgs
+import CmdArgs (TextArg (parseArg, printArg), parseArgs)
 import Common
-import Data.List (all)
+  ( Parameters
+      ( Parameters,
+        inputFileName,
+        inputFormat,
+        outputFileName,
+        outputFormat
+      ),
+    TransportFormat (..),
+  )
+import TestTree (TestTree (Test, TestSet))
 
-testPrintTransportFormatArg :: Bool
+testPrintTransportFormatArg :: TestTree
 testPrintTransportFormatArg =
-  and
-    [ printArg LowOverhead == "low_overhead",
-      printArg AnnexB == "annex_b",
-      printArg Json == "json"
+  TestSet
+    "testPrintTransportFormatArg"
+    [ Test "low_overhead" $ printArg LowOverhead == "low_overhead",
+      Test "annex_b" $ printArg AnnexB == "annex_b",
+      Test "json" $ printArg Json == "json"
     ]
 
-testParseTransportFormatArg :: Bool
+testParseTransportFormatArg :: TestTree
 testParseTransportFormatArg =
-  and
-    [ parseArg "low_overhead" == Just LowOverhead,
-      parseArg "annex_b" == Just AnnexB,
-      parseArg "json" == Just Json,
-      parseArg "invalid" == (Nothing :: Maybe TransportFormat)
+  TestSet
+    "testParseTransportFormatArg"
+    [ Test "low_overhead" $ parseArg "low_overhead" == Just LowOverhead,
+      Test "annex_b" $ parseArg "annex_b" == Just AnnexB,
+      Test "json" $ parseArg "json" == Just Json,
+      Test "invalid" $ parseArg "invalid" == (Nothing :: Maybe TransportFormat)
     ]
 
-testParseArgs :: Bool
+testParseArgs :: TestTree
 testParseArgs =
-  parseArgs
-    [ "-o",
-      "output.txt",
-      "-i",
-      "input.txt",
-      "-of",
-      "annex_b",
-      "-if",
-      "low_overhead"
-    ]
-    == Parameters
-      { inputFormat = LowOverhead,
-        outputFormat = AnnexB,
-        inputFileName = "input.txt",
-        outputFileName = "output.txt"
-      }
+  Test "testParseArgs" $
+    parseArgs
+      [ "-o",
+        "output.txt",
+        "-i",
+        "input.txt",
+        "-of",
+        "annex_b",
+        "-if",
+        "low_overhead"
+      ]
+      == Parameters
+        { inputFormat = LowOverhead,
+          outputFormat = AnnexB,
+          inputFileName = "input.txt",
+          outputFileName = "output.txt"
+        }
 
-cmdArgsTest = do
-  putStrLn $ "testPrintTransportFormatArg : " ++ show testPrintTransportFormatArg
-  putStrLn $ "testParseTransportFormatArg : " ++ show testParseTransportFormatArg
-  putStrLn $ "testParseArgs : " ++ show testParseArgs
+cmdArgsTest :: TestTree
+cmdArgsTest =
+  TestSet
+    "cmdArgsTest"
+    [ testPrintTransportFormatArg,
+      testParseTransportFormatArg,
+      testParseArgs
+    ]

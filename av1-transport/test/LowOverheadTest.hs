@@ -2,6 +2,7 @@ module LowOverheadTest (lowOverheadTest) where
 
 import Common (ObuBytes)
 import LowOverhead (decodeBitstream, encodeBitstream)
+import TestTree (TestTree (Test, TestSet))
 
 obu01 :: ObuBytes
 obu01 =
@@ -47,18 +48,21 @@ obu02NoSize =
     0x08
   ]
 
-decodeBitstreamTest :: Bool
+decodeBitstreamTest :: TestTree
 decodeBitstreamTest =
-  decodeBitstream (obu01 ++ obu02) == Right [obu01, obu02]
+  Test "decodeBitstreamTest" $
+    decodeBitstream (obu01 ++ obu02) == Right [obu01, obu02]
 
-encodeBitstreamTest :: Bool
+encodeBitstreamTest :: TestTree
 encodeBitstreamTest =
-  and
-    [ encodeBitstream [obu01, obu02] == Just (obu01 ++ obu02),
-      encodeBitstream [obu01NoSize, obu02NoSize] == Just (obu01 ++ obu02)
-    ]
+  Test "encodeBitstreamTest" $
+    and
+      [ encodeBitstream [obu01, obu02] == Just (obu01 ++ obu02),
+        encodeBitstream [obu01NoSize, obu02NoSize] == Just (obu01 ++ obu02)
+      ]
 
-lowOverheadTest = do
-  putStrLn "LowOverheadTest"
-  putStrLn $ "decodeBitstreamTest : " ++ show decodeBitstreamTest
-  putStrLn $ "encodeBitstreamTest : " ++ show encodeBitstreamTest
+lowOverheadTest :: TestTree
+lowOverheadTest =
+  TestSet
+    "lowOverheadTest"
+    [decodeBitstreamTest, encodeBitstreamTest]
