@@ -40,7 +40,7 @@ library:
   - Cabal
   - containers
   - bytestring
-  - utf8-string
+  - aeson
 
 executables:
   av1-transport-exe:
