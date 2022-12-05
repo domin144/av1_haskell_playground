@@ -15,10 +15,8 @@ module Common
   )
 where
 
-import Data.Binary (encode)
 import Data.Bits (Bits (bit, clearBit, shift, testBit, (.&.), (.|.)))
 import Data.Word (Word8)
-import Distribution.Simple.Utils (xargs)
 
 data TransportFormat = LowOverhead | AnnexB | Json
   deriving (Eq, Ord, Show, Read, Bounded, Enum)
@@ -101,7 +99,7 @@ rewindToRight = flip rewindToLeft
 type Result = Either String
 
 wrapResult :: String -> Result a -> Result a
-wrapResult comment (Left error) = Left (comment ++ ": " ++ error)
+wrapResult comment (Left message) = Left (comment ++ ": " ++ message)
 wrapResult _ (Right result) = Right result
 
 wrapMaybe :: String -> Maybe a -> Result a

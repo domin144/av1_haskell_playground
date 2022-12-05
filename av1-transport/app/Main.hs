@@ -40,8 +40,21 @@ process parsedArgs = do
   hClose inputHandle
   hClose outputHandle
 
+helpString :: String
+helpString =
+  "AV-1 bytestream format converter\n\
+  \\n\
+  \Usage:\n\
+  \    av1-transport-exe -if INPUT_FORMAT -i INPUT_FILE -of OUTPUT_FORMAT -o OUTPUT_FILE\n\
+  \\n\
+  \    INPUT_FORMAT and OUTPUT_FORMAT are one of \"annex_b\", \"low_overhead\" or \"json\"\n\
+  \"
+
 main :: IO ()
 main = do
   args <- getArgs
-  let parsedArgs = parseArgs args
-  process parsedArgs
+  case parseArgs args of
+    Left errorMessage -> do
+      putStrLn $ "Failed to parse arguments: " ++ errorMessage
+      putStr helpString
+    Right parsedArgs -> process parsedArgs

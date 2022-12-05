@@ -45,12 +45,14 @@ testParseArgs =
         "-if",
         "low_overhead"
       ]
-      == Parameters
-        { inputFormat = LowOverhead,
-          outputFormat = AnnexB,
-          inputFileName = "input.txt",
-          outputFileName = "output.txt"
-        }
+      == Right
+        ( Parameters
+            { inputFormat = LowOverhead,
+              outputFormat = AnnexB,
+              inputFileName = "input.txt",
+              outputFileName = "output.txt"
+            }
+        )
 
 cmdArgsTest :: TestTree
 cmdArgsTest =

@@ -4,10 +4,10 @@ module CmdArgs
   )
 where
 
-import Common
-import Data.List(find)
-import Data.Maybe(isNothing)
+import Common (Parameters (..), Result, TransportFormat (..), wrapMaybe)
+import Data.List (find)
 import qualified Data.Map as Map
+import Data.Maybe (isNothing)
 
 class (Eq a, Enum a, Bounded a) => TextArg a where
   printArg :: a -> String
@@ -28,42 +28,50 @@ data ArgId
 
 type ArgMap = Map.Map ArgId String
 
-insertNewOnly :: ArgId -> String -> ArgMap -> ArgMap
-insertNewOnly argId x map =
-  if isNothing (Map.lookup argId map)
-    then Map.insert argId x map
-    else error ("Parameter " ++ show argId ++ " specified twice")
+insertNewOnly :: ArgId -> String -> ArgMap -> Result ArgMap
+insertNewOnly argId x argMap =
+  if isNothing (Map.lookup argId argMap)
+    then Right $ Map.insert argId x argMap
+    else Left $ "Parameter " ++ show argId ++ " specified twice"
 
-parseOneArg :: [String] -> (ArgId, String, [String])
-parseOneArg ("-if" : x : xs) = (InputFileFormatId, x, xs)
-parseOneArg ("-i" : x : xs) = (InputFileNameId, x, xs)
-parseOneArg ("-of" : x : xs) = (OutputFileFormatId, x, xs)
-parseOneArg ("-o" : x : xs) = (OutputFileNameId, x, xs)
-parseOneArg _ = error "invalid arguments"
+parseOneArg :: [String] -> Result (ArgId, String, [String])
+parseOneArg ("-if" : x : xs) = Right (InputFileFormatId, x, xs)
+parseOneArg ("-i" : x : xs) = Right (InputFileNameId, x, xs)
+parseOneArg ("-of" : x : xs) = Right (OutputFileFormatId, x, xs)
+parseOneArg ("-o" : x : xs) = Right (OutputFileNameId, x, xs)
+parseOneArg (x : _) = Left $ "invalid parameter" ++ x
+parseOneArg _ = Left "out of parameters"
 
-parseToMap :: ArgMap -> [String] -> ArgMap
-parseToMap argMap [] = argMap
-parseToMap argMap xs =
-  parseToMap (insertNewOnly argId value argMap) ys
+parseToMap :: [String] -> Result ArgMap
+parseToMap = parseMore Map.empty
   where
-    (argId, value, ys) = parseOneArg xs
+    parseMore argMap [] = Right argMap
+    parseMore argMap xs = do
+      (argId, value, ys) <- parseOneArg xs
+      extendedMap <- insertNewOnly argId value argMap
+      parseMore extendedMap ys
 
-mapElement :: Ord key => key -> Map.Map key value -> value
-mapElement key map = case Map.lookup key map of
-  Just x -> x
-  Nothing -> error "missing element in a map"
+getParameterFromMap :: ArgId -> ArgMap -> Result String
+getParameterFromMap argId argMap =
+  wrapMaybe ("Missing argument: " ++ show argId) $ Map.lookup argId argMap
 
-parseArgOrDie :: TextArg a => String -> a
-parseArgOrDie string = case parseArg string of
-  Just x -> x
-  Nothing -> error "could not parse arg"
+parseArgOrWarn :: TextArg a => String -> Result a
+parseArgOrWarn string = wrapMaybe "Failed to parse argument" $ parseArg string
 
-parseArgs :: [String] -> Parameters
-parseArgs xs =
-  let map = parseToMap Map.empty xs
-   in Parameters
-        { inputFormat = parseArgOrDie $ mapElement InputFileFormatId map,
-          inputFileName = mapElement InputFileNameId map,
-          outputFormat = parseArgOrDie $ mapElement OutputFileFormatId map,
-          outputFileName = mapElement OutputFileNameId map
-        }
+parseArgs :: [String] -> Result Parameters
+parseArgs ["--help"] = Left "Help requested!"
+parseArgs xs = do
+  argMap <- parseToMap xs
+  inputFormatValue <-
+    getParameterFromMap InputFileFormatId argMap >>= parseArgOrWarn
+  inputFileNameValue <- getParameterFromMap InputFileNameId argMap
+  outputFormatValue <-
+    getParameterFromMap OutputFileFormatId argMap >>= parseArgOrWarn
+  outputFileNameValue <- getParameterFromMap OutputFileNameId argMap
+  return
+    Parameters
+      { inputFormat = inputFormatValue,
+        inputFileName = inputFileNameValue,
+        outputFormat = outputFormatValue,
+        outputFileName = outputFileNameValue
+      }
